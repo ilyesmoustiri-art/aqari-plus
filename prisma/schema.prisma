@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  password      String
+  role          String   @default("مستخدم")
+  avatar        String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  properties      Property[]
+  taxPayments     TaxPayment[]
+  contactRequests ContactRequest[]
+  sentMessages    Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String
+  price       Float
+  area        Float
+  rooms       Int?
+  bathrooms   Int?
+  city        String
+  address     String
+  image       String?
+  featured    Boolean  @default(false)
+  status      String   @default("متاح")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  taxPayments TaxPayment[]
+  contactRequests ContactRequest[]
+  messages    Message[]
+}
+
+model TaxPayment {
+  id          String   @id @default(cuid())
+  propertyId  String?
+  type        String
+  amount      Float
+  status      String   @default("قيد الانتظار")
+  dueDate     DateTime
+  paidDate    DateTime?
+  reference   String?
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  property    Property? @relation(fields: [propertyId], references: [id])
+}
+
+model ContactRequest {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  propertyId  String?
+  message     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  property    Property? @relation(fields: [propertyId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  read        Boolean  @default(false)
+  propertyId  String?
+  createdAt   DateTime @default(now())
+
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  property    Property? @relation(fields: [propertyId], references: [id])
+}
